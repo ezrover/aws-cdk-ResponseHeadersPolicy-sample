@@ -10,8 +10,8 @@ export class CdkAppStack extends Stack {
   constructor(scope: Construct, id: string, props?: StackProps) {
     super(scope, id, props);
 
-    const designBucket = new s3.Bucket(this, `${id}-design-bucket`, {
-      bucketName: `design-bucket`,
+    const designBucket = new s3.Bucket(this, `${id}-web-bucket`, {
+      bucketName: `${id}-web-bucket`,
       removalPolicy: cdk.RemovalPolicy.DESTROY,
       autoDeleteObjects: true,
       versioned: false,
@@ -55,23 +55,17 @@ export class CdkAppStack extends Stack {
     );
 
     // Creating a custom response headers policy -- all parameters optional
-    const myResponseHeadersPolicy = new cloudfront.ResponseHeadersPolicy(this, 'ResponseHeadersPolicy', {
-      responseHeadersPolicyName: 'MyPolicy',
+    const myResponseHeadersPolicy = new cloudfront.ResponseHeadersPolicy(this,  `${id}-MyPolicy`, {
+      responseHeadersPolicyName: `${id}-MyPolicy`,
       comment: 'A default policy',
       corsBehavior: {
         accessControlAllowCredentials: false,
-        accessControlAllowHeaders: ['X-Custom-Header-1', 'X-Custom-Header-2'],
+        accessControlAllowHeaders: ['CloudFront-Is-Tablet-Viewer', 'CloudFront-Is-SmartTV-Viewer'],
         accessControlAllowMethods: ['GET', 'POST'],
         accessControlAllowOrigins: ['*'],
-        accessControlExposeHeaders: ['X-Custom-Header-1', 'X-Custom-Header-2'],
+        //accessControlExposeHeaders: ['*'],
         accessControlMaxAge: cdk.Duration.seconds(600),
         originOverride: true,
-      },
-      customHeadersBehavior: {
-        customHeaders: [
-          { header: 'X-Amz-Date', value: 'some-value', override: true },
-          { header: 'X-Amz-Security-Token', value: 'some-value', override: false },
-        ],
       },
       securityHeadersBehavior: {
         contentSecurityPolicy: { contentSecurityPolicy: 'default-src https:;', override: true },
@@ -82,7 +76,7 @@ export class CdkAppStack extends Stack {
         xssProtection: { protection: true, modeBlock: true, reportUri: 'https://example.com/csp-report', override: true },
       },
     });
-    new cloudfront.Distribution(this, 'myDistCustomPolicy', {
+    new cloudfront.Distribution(this,  `${id}-DistCustomPolicy`, {
       defaultBehavior: {
         origin: new origins.S3Origin(designBucket, {
           originAccessIdentity: cloudFrontOAI,
